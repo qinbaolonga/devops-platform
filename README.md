@@ -130,20 +130,15 @@ sudo nginx -s reload
 
 <details>
 <summary>点击查看截图</summary>
-
 ### 登录页面
 科技感十足的登录界面，支持验证码
 <img width="1980" height="1008" alt="image" src="https://github.com/user-attachments/assets/075beadb-8073-4842-8d7a-5ffbb376f90d" />
-
-
 ### 监控中心
 实时监控主机 CPU、内存、磁盘使用情况
-<img width="2199" height="1107" alt="image" src="https://github.com/user-attachments/assets/93db7036-0cd6-4b5a-aab4-99b53944ab53" />
-
+<img width="2220" height="1134" alt="image" src="https://github.com/user-attachments/assets/812b137a-8b93-497a-a125-7fb37dc5fc8c" />
 ### 主机管理
 批量管理服务器，支持 Excel 导入导出
 <img width="2217" height="1122" alt="image" src="https://github.com/user-attachments/assets/f8189240-d0fe-49bf-85d9-7caf15c18b5b" />
-
 ### Web 终端
 在线 SSH 终端，支持多标签页
 <img width="2214" height="1107" alt="image" src="https://github.com/user-attachments/assets/2d8b8943-a844-44a4-963d-ab9c10b67a1a" />

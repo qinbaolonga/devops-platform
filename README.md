@@ -133,18 +133,24 @@ sudo nginx -s reload
 
 ### 登录页面
 科技感十足的登录界面，支持验证码
+<img width="1980" height="1008" alt="image" src="https://github.com/user-attachments/assets/075beadb-8073-4842-8d7a-5ffbb376f90d" />
+
 
 ### 监控中心
 实时监控主机 CPU、内存、磁盘使用情况
+<img width="2199" height="1107" alt="image" src="https://github.com/user-attachments/assets/93db7036-0cd6-4b5a-aab4-99b53944ab53" />
 
 ### 主机管理
 批量管理服务器，支持 Excel 导入导出
+<img width="2217" height="1122" alt="image" src="https://github.com/user-attachments/assets/f8189240-d0fe-49bf-85d9-7caf15c18b5b" />
 
 ### Web 终端
 在线 SSH 终端，支持多标签页
+<img width="2175" height="1041" alt="image" src="https://github.com/user-attachments/assets/54457971-3195-4e29-b2dc-14de6b39ae85" />
 
 ### 命令执行
 批量执行命令，支持自定义快捷命令
+<img width="2210" height="1116" alt="image" src="https://github.com/user-attachments/assets/2abc06e9-c67c-4bc3-97f3-70346c6124b0" />
 
 </details>
 

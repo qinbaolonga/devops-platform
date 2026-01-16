@@ -1,0 +1,91 @@
+# Dependencies
+node_modules/
+.pnp
+.pnp.js
+
+# Testing
+coverage/
+*.lcov
+.nyc_output
+
+# Production Build
+build/
+dist/
+out/
+
+# Environment - 敏感配置不要提交
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+backend/.env
+
+# Logs
+logs/
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+lerna-debug.log*
+pnpm-debug.log*
+
+# PID files
+pids/
+*.pid
+
+# OS
+.DS_Store
+Thumbs.db
+*.swp
+*.swo
+*~
+
+# IDE
+.idea/
+*.sublime-project
+*.sublime-workspace
+*.iml
+
+# Prisma - 保留 migrations
+# prisma/migrations/
+
+# Uploads
+uploads/
+!uploads/.gitkeep
+temp/
+
+# Backups
+backups/
+
+# Docker
+docker-compose.override.yml
+
+# Ansible
+*.retry
+.ansible/
+
+# PM2
+.pm2/
+pm2.log
+
+# Cache
+.cache/
+.parcel-cache/
+.next/
+.nuxt/
+
+# SSL Certificates - 敏感文件不要提交
+*.pem
+*.key
+*.crt
+*.p12
+*.pfx
+
+# Kiro specs
+.kiro/
+
+# Summary files - 这些是开发过程中生成的
+*_SUMMARY.md
+*_CHECKLIST.md
+*_GUIDE.md

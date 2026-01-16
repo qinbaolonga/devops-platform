@@ -1,0 +1,444 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+// 用户表
+model User {
+  id              String    @id @default(uuid())
+  username        String    @unique
+  password        String    // bcrypt 哈希
+  email           String?   @unique
+  role            UserRole  @default(OPERATOR)
+  enabled         Boolean   @default(true)
+  lastLoginAt     DateTime?
+  lastLoginIp     String?
+  failedAttempts  Int       @default(0)
+  lockedUntil     DateTime?
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+  
+  projects        ProjectMember[]
+  tasks           Task[]
+  playbooks       Playbook[]
+  auditLogs       AuditLog[]
+  scheduledTasks  ScheduledTask[]
+  
+  @@index([username])
+  @@index([email])
+  @@map("users")
+}
+
+enum UserRole {
+  SUPER_ADMIN
+  ADMIN
+  OPERATOR
+  VIEWER
+}
+
+// 项目表
+model Project {
+  id          String    @id @default(uuid())
+  name        String
+  description String?   @db.Text
+  createdBy   String
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+  
+  members     ProjectMember[]
+  hosts       Host[]
+  hostGroups  HostGroup[]
+  playbooks   Playbook[]
+  tasks       Task[]
+  credentials Credential[]
+  alertRules  AlertRule[]
+  scheduledTasks ScheduledTask[]
+  notificationChannels NotificationChannel[]
+  
+  @@map("projects")
+}
+
+// 项目成员表
+model ProjectMember {
+  id          String      @id @default(uuid())
+  projectId   String
+  userId      String
+  role        ProjectRole
+  joinedAt    DateTime    @default(now())
+  
+  project     Project     @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  user        User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  @@unique([projectId, userId])
+  @@index([projectId])
+  @@index([userId])
+  @@map("project_members")
+}
+
+enum ProjectRole {
+  OWNER
+  ADMIN
+  MEMBER
+  VIEWER
+}
+
+// 主机表
+model Host {
+  id            String      @id @default(uuid())
+  name          String
+  ip            String      // 主要连接IP（用于SSH连接）
+  publicIp      String?     // 公网IP
+  privateIp     String?     // 内网IP
+  port          Int         @default(22)
+  username      String      @default("root")
+  authType      AuthType
+  password      String?     // 加密存储
+  credentialId  String?
+  status        HostStatus  @default(UNKNOWN)
+  osType        String?
+  osVersion     String?
+  cpuCores      Int?
+  memoryTotal   BigInt?
+  diskTotal     BigInt?
+  lastCheckTime DateTime?
+  tags          Json?
+  groupId       String?
+  projectId     String
+  customFields  Json?
+  createdAt     DateTime    @default(now())
+  updatedAt     DateTime    @updatedAt
+  
+  project       Project     @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  group         HostGroup?  @relation(fields: [groupId], references: [id])
+  credential    Credential? @relation(fields: [credentialId], references: [id])
+  metrics       HostMetric[]
+  alerts        Alert[]
+  
+  @@index([projectId])
+  @@index([status])
+  @@index([ip])
+  @@map("hosts")
+}
+
+enum AuthType {
+  PASSWORD
+  SSH_KEY
+  CREDENTIAL
+}
+
+enum HostStatus {
+  ONLINE
+  OFFLINE
+  UNKNOWN
+}
+
+// 主机分组表
+model HostGroup {
+  id          String    @id @default(uuid())
+  name        String
+  description String?
+  projectId   String
+  createdAt   DateTime  @default(now())
+  
+  project     Project   @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  hosts       Host[]
+  
+  @@index([projectId])
+  @@map("host_groups")
+}
+
+// 凭据表
+model Credential {
+  id          String        @id @default(uuid())
+  name        String
+  type        CredentialType
+  username    String?
+  password    String?       // 加密存储
+  privateKey  String?       @db.Text // 加密存储
+  passphrase  String?       // 加密存储
+  description String?
+  projectId   String
+  createdAt   DateTime      @default(now())
+  updatedAt   DateTime      @updatedAt
+  
+  project     Project       @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  hosts       Host[]
+  
+  @@index([projectId])
+  @@map("credentials")
+}
+
+enum CredentialType {
+  SSH_PASSWORD
+  SSH_KEY
+  API_TOKEN
+}
+
+// Playbook 表
+model Playbook {
+  id          String    @id @default(uuid())
+  name        String
+  description String?   @db.Text
+  content     String    @db.Text
+  version     Int       @default(1)
+  variables   Json?
+  projectId   String
+  createdBy   String
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+  
+  project     Project   @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  user        User      @relation(fields: [createdBy], references: [id])
+  versions    PlaybookVersion[]
+  
+  @@index([projectId])
+  @@map("playbooks")
+}
+
+// Playbook 版本表
+model PlaybookVersion {
+  id          String    @id @default(uuid())
+  playbookId  String
+  version     Int
+  content     String    @db.Text
+  changelog   String?   @db.Text
+  createdAt   DateTime  @default(now())
+  
+  playbook    Playbook  @relation(fields: [playbookId], references: [id], onDelete: Cascade)
+  
+  @@unique([playbookId, version])
+  @@index([playbookId])
+  @@map("playbook_versions")
+}
+
+// 任务表
+model Task {
+  id              String      @id @default(uuid())
+  type            TaskType
+  name            String
+  command         String?     @db.Text
+  playbookId      String?
+  status          TaskStatus  @default(PENDING)
+  hostIds         Json
+  result          Json?
+  output          String?     @db.LongText
+  startTime       DateTime?
+  endTime         DateTime?
+  duration        Int?
+  createdBy       String
+  projectId       String
+  scheduledTaskId String?
+  createdAt       DateTime    @default(now())
+  
+  project         Project         @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  user            User            @relation(fields: [createdBy], references: [id])
+  scheduledTask   ScheduledTask?  @relation("ScheduledTaskTasks", fields: [scheduledTaskId], references: [id])
+  
+  @@index([projectId])
+  @@index([status])
+  @@index([createdAt])
+  @@index([scheduledTaskId])
+  @@map("tasks")
+}
+
+enum TaskType {
+  COMMAND
+  PLAYBOOK
+  SCRIPT
+}
+
+enum TaskStatus {
+  PENDING
+  RUNNING
+  SUCCESS
+  FAILED
+  CANCELLED
+}
+
+// 定时任务表
+model ScheduledTask {
+  id              String      @id @default(uuid())
+  name            String
+  description     String?
+  type            TaskType
+  cronExpression  String
+  command         String?     @db.Text
+  playbookId      String?
+  hostIds         Json
+  variables       Json?
+  enabled         Boolean     @default(true)
+  lastExecutedAt  DateTime?
+  nextExecuteAt   DateTime?
+  projectId       String
+  createdBy       String
+  createdAt       DateTime    @default(now())
+  updatedAt       DateTime    @updatedAt
+  
+  project         Project     @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  user            User        @relation(fields: [createdBy], references: [id])
+  tasks           Task[]      @relation("ScheduledTaskTasks")
+  
+  @@index([projectId])
+  @@index([enabled])
+  @@map("scheduled_tasks")
+}
+
+// 主机监控指标表
+model HostMetric {
+  id          String    @id @default(uuid())
+  hostId      String
+  cpuUsage    Float
+  memoryUsage Float
+  diskUsage   Float
+  networkIn   Float
+  networkOut  Float
+  loadAvg     Float
+  timestamp   DateTime  @default(now())
+  
+  host        Host      @relation(fields: [hostId], references: [id], onDelete: Cascade)
+  
+  @@index([hostId, timestamp])
+  @@map("host_metrics")
+}
+
+// 告警规则表
+model AlertRule {
+  id          String      @id @default(uuid())
+  name        String
+  metric      MetricType
+  operator    Operator
+  threshold   Float
+  duration    Int
+  level       AlertLevel
+  enabled     Boolean     @default(true)
+  hostIds     Json
+  projectId   String
+  createdAt   DateTime    @default(now())
+  updatedAt   DateTime    @updatedAt
+  
+  project     Project     @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  alerts      Alert[]
+  
+  @@index([projectId])
+  @@index([enabled])
+  @@map("alert_rules")
+}
+
+enum MetricType {
+  CPU
+  MEMORY
+  DISK
+  NETWORK_IN
+  NETWORK_OUT
+  LOAD
+}
+
+enum Operator {
+  GT
+  LT
+  GTE
+  LTE
+  EQ
+}
+
+enum AlertLevel {
+  INFO
+  WARNING
+  ERROR
+  CRITICAL
+}
+
+// 告警记录表
+model Alert {
+  id              String      @id @default(uuid())
+  ruleId          String
+  hostId          String
+  level           AlertLevel
+  message         String      @db.Text
+  value           Float
+  status          AlertStatus @default(FIRING)
+  firedAt         DateTime    @default(now())
+  resolvedAt      DateTime?
+  acknowledgedAt  DateTime?
+  acknowledgedBy  String?
+  
+  rule            AlertRule   @relation(fields: [ruleId], references: [id], onDelete: Cascade)
+  host            Host        @relation(fields: [hostId], references: [id], onDelete: Cascade)
+  
+  @@index([ruleId])
+  @@index([hostId])
+  @@index([status])
+  @@index([firedAt])
+  @@map("alerts")
+}
+
+enum AlertStatus {
+  FIRING
+  RESOLVED
+  ACKNOWLEDGED
+}
+
+// 通知渠道表
+model NotificationChannel {
+  id          String        @id @default(uuid())
+  name        String
+  type        ChannelType
+  config      Json
+  enabled     Boolean       @default(true)
+  projectId   String
+  createdAt   DateTime      @default(now())
+  updatedAt   DateTime      @updatedAt
+  
+  project     Project       @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  
+  @@index([projectId])
+  @@map("notification_channels")
+}
+
+enum ChannelType {
+  EMAIL
+  DINGTALK
+  WECHAT
+  SLACK
+  WEBHOOK
+}
+
+// 审计日志表
+model AuditLog {
+  id          String    @id @default(uuid())
+  userId      String
+  action      String
+  resource    String
+  resourceId  String?
+  details     Json?
+  ip          String
+  userAgent   String?
+  createdAt   DateTime  @default(now())
+  
+  user        User      @relation(fields: [userId], references: [id])
+  
+  @@index([userId])
+  @@index([action])
+  @@index([createdAt])
+  @@map("audit_logs")
+}
+
+// 系统配置表
+model SystemConfig {
+  id          String    @id @default(uuid())
+  key         String    @unique
+  value       String    @db.Text
+  type        String    @default("string") // string, number, boolean, array
+  encrypted   Boolean   @default(false)
+  description String?
+  updatedAt   DateTime  @updatedAt
+  
+  @@map("system_configs")
+}

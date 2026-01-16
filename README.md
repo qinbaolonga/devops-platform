@@ -146,8 +146,7 @@ sudo nginx -s reload
 
 ### Web 终端
 在线 SSH 终端，支持多标签页
-<img width="2175" height="1041" alt="image" src="https://github.com/user-attachments/assets/54457971-3195-4e29-b2dc-14de6b39ae85" />
-
+<img width="2214" height="1107" alt="image" src="https://github.com/user-attachments/assets/2d8b8943-a844-44a4-963d-ab9c10b67a1a" />
 ### 命令执行
 批量执行命令，支持自定义快捷命令
 <img width="2210" height="1116" alt="image" src="https://github.com/user-attachments/assets/2abc06e9-c67c-4bc3-97f3-70346c6124b0" />

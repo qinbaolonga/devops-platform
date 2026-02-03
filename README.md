@@ -43,7 +43,6 @@
 
 - Node.js >= 18.0.0
 - MySQL >= 5.7
-- Redis >= 6.0
 - Ansible (可选，用于 Playbook 执行)
 
 ### 安装
